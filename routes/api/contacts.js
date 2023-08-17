@@ -19,7 +19,6 @@ const schema = Joi.object({
 router.get('/', async (req, res, next) => {
   try {
     const contacts = await listContacts();
-    // res.status(200).json(contacts);
     res.json({
       status: 'success',
       code: 200,
@@ -38,7 +37,6 @@ router.get('/:contactId', async (req, res, next) => {
     const contact = await getContactById(contactId);
 
     if (contact) {
-      // res.status(200).json(contact);
       res.json({
         status: 'success',
         code: 200,
@@ -47,7 +45,6 @@ router.get('/:contactId', async (req, res, next) => {
         },
       });
     } else {
-      // res.status(404).json({ message: 'Not found' });
       res.status(404).json({
         status: 'error',
         code: 404,
@@ -63,7 +60,6 @@ router.post('/', async (req, res, next) => {
   try {
     const { name, email, phone } = req.body;
 
-    // ---- validation START
     const { error } = schema.validate(req.body);
 
     if (error) {
@@ -74,18 +70,6 @@ router.post('/', async (req, res, next) => {
         errorDetails: error.details,
       });
     }
-    // ---- validation END
-
-    // ---- old ver. START
-    // if (!name || !email || !phone) {
-    //   res.status(400).json({
-    //     status: 'error',
-    //     code: 400,
-    //     message: 'Missing required fields',
-    //   });
-    //   return;
-    // }
-    // ---- old ver. END
 
     const newContact = { name, email, phone };
 
@@ -115,14 +99,12 @@ router.delete('/:contactId', async (req, res, next) => {
         message: 'Contact deleted',
         deletedContact: contact,
       });
-      // res.status(200).json({ message: 'contact deleted' });
     } else {
       res.status(404).json({
         status: 'error',
         code: 404,
         message: 'Contact not found',
       });
-      // res.status(404).json({ message: 'Not found' });
     }
   } catch (error) {
     next(error);
@@ -134,7 +116,6 @@ router.put('/:contactId', async (req, res, next) => {
     const contactId = req.params.contactId;
     const { name, email, phone } = req.body;
 
-    // ---- validation START
     const { error } = schema.validate({ name, email, phone });
 
     if (error) {
@@ -145,19 +126,6 @@ router.put('/:contactId', async (req, res, next) => {
         errorDetails: error.details,
       });
     }
-    // ---- validation END
-
-    // ---- old ver. START
-    // if (!name || !email || !phone) {
-    //   res.status(400).json({
-    //     status: 'error',
-    //     code: 400,
-    //     message: 'Missing required fields',
-    //   });
-    //   return;
-    //   // res.status(400).json({ message: 'missing required name fields' });
-    // }
-    // ---- old ver. END
 
     const contact = await getContactById(contactId);
 
@@ -170,14 +138,12 @@ router.put('/:contactId', async (req, res, next) => {
           contact: updatedContact,
         },
       });
-      // res.status(200).json(updatedContact);
     } else {
       res.status(404).json({
         status: 'error',
         code: 404,
         message: 'Contact not found',
       });
-      // res.status(404).json({ message: 'Not found' });
     }
   } catch (error) {
     next(error);
