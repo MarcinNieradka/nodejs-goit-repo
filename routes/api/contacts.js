@@ -95,7 +95,6 @@ router.delete('/:contactId', async (req, res, next) => {
 router.put('/:contactId', async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
-    // const { name, email, phone } = req.body;
 
     const contact = await getContactById(contactId);
 
