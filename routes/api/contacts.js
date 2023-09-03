@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Joi = require('joi');
 
 const {
   listContacts,
@@ -9,6 +10,13 @@ const {
   updateContact,
   updateFavorite,
 } = require('../../models/contacts');
+
+const schema = Joi.object({
+  name: Joi.string().alphanum().min(2).max(40).required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().min(3).max(25).required(),
+  favorite: Joi.boolean(),
+});
 
 router.get('/', async (req, res, next) => {
   try {
@@ -53,6 +61,17 @@ router.get('/:contactId', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { body } = req;
+    const { error } = schema.validate(body);
+
+    if (error) {
+      return res.status(400).json({
+        status: 'error',
+        code: 400,
+        message: 'Problem with validation',
+        errorDetails: error.details,
+      });
+    }
+
     const addedContact = await addContact(body);
 
     res.status(201).json({
@@ -95,11 +114,22 @@ router.delete('/:contactId', async (req, res, next) => {
 router.put('/:contactId', async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
+    const { body } = req;
+    const { error } = schema.validate(body);
+
+    if (error) {
+      return res.status(400).json({
+        status: 'error',
+        code: 400,
+        message: 'Problem with validation',
+        errorDetails: error.details,
+      });
+    }
 
     const contact = await getContactById(contactId);
 
     if (contact) {
-      const updatedContact = await updateContact(contactId, req.body);
+      const updatedContact = await updateContact(contactId, body);
       res.json({
         status: 'success',
         code: 200,
