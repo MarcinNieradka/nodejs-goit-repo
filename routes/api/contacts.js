@@ -8,12 +8,14 @@ const {
   removeContact,
   addContact,
   updateContact,
+  updateFavorite,
 } = require('../../models/contacts');
 
 const schema = Joi.object({
   name: Joi.string().alphanum().min(2).max(40).required(),
   email: Joi.string().email().required(),
   phone: Joi.string().min(3).max(25).required(),
+  favorite: Joi.boolean(),
 });
 
 router.get('/', async (req, res, next) => {
@@ -58,9 +60,8 @@ router.get('/:contactId', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { name, email, phone } = req.body;
-
-    const { error } = schema.validate(req.body);
+    const { body } = req;
+    const { error } = schema.validate(body);
 
     if (error) {
       return res.status(400).json({
@@ -71,9 +72,8 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    const newContact = { name, email, phone };
+    const addedContact = await addContact(body);
 
-    const addedContact = await addContact(newContact);
     res.status(201).json({
       status: 'success',
       code: 201,
@@ -114,9 +114,8 @@ router.delete('/:contactId', async (req, res, next) => {
 router.put('/:contactId', async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
-    const { name, email, phone } = req.body;
-
-    const { error } = schema.validate({ name, email, phone });
+    const { body } = req;
+    const { error } = schema.validate(body);
 
     if (error) {
       return res.status(400).json({
@@ -130,7 +129,42 @@ router.put('/:contactId', async (req, res, next) => {
     const contact = await getContactById(contactId);
 
     if (contact) {
-      const updatedContact = await updateContact(contactId, req.body);
+      const updatedContact = await updateContact(contactId, body);
+      res.json({
+        status: 'success',
+        code: 200,
+        updatedData: {
+          contact: updatedContact,
+        },
+      });
+    } else {
+      res.status(404).json({
+        status: 'error',
+        code: 404,
+        message: 'Contact not found',
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:contactId/favorite', async (req, res, next) => {
+  try {
+    const contactId = req.params.contactId;
+    const { favorite } = req.body;
+
+    if (favorite === undefined) {
+      return res.status(400).json({
+        status: 'error',
+        code: 400,
+        message: 'missing field favorite',
+      });
+    }
+
+    const updatedContact = await updateFavorite(contactId, favorite);
+
+    if (updatedContact) {
       res.json({
         status: 'success',
         code: 200,
