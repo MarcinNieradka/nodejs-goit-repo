@@ -1,6 +1,7 @@
 const express = require('express');
-const router = express.Router();
+const contactsRouter = express.Router();
 const Joi = require('joi');
+const auth = require('../../config/authorization.js');
 
 const {
   listContacts,
@@ -18,9 +19,16 @@ const schema = Joi.object({
   favorite: Joi.boolean(),
 });
 
-router.get('/', async (req, res, next) => {
+contactsRouter.get('/', auth, async (req, res, next) => {
   try {
-    const contacts = await listContacts();
+    const { id: userId } = req.user;
+    const { favorite } = req.query;
+    let contacts = await listContacts(userId);
+
+    if (favorite === 'true') {
+      contacts = contacts.filter(contact => contact.favorite);
+    }
+
     res.json({
       status: 'success',
       code: 200,
@@ -33,10 +41,11 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.get('/:contactId', async (req, res, next) => {
+contactsRouter.get('/:contactId', auth, async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
-    const contact = await getContactById(contactId);
+    const { id: userId } = req.user;
+    const contact = await getContactById(contactId, userId);
 
     if (contact) {
       res.json({
@@ -58,9 +67,10 @@ router.get('/:contactId', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+contactsRouter.post('/', auth, async (req, res, next) => {
   try {
     const { body } = req;
+    const { id: userId } = req.user;
     const { error } = schema.validate(body);
 
     if (error) {
@@ -72,7 +82,7 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    const addedContact = await addContact(body);
+    const addedContact = await addContact(body, userId);
 
     res.status(201).json({
       status: 'success',
@@ -86,13 +96,14 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.delete('/:contactId', async (req, res, next) => {
+contactsRouter.delete('/:contactId', auth, async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
-    const contact = await getContactById(contactId);
+    const { id: userId } = req.user;
+    const contact = await getContactById(contactId, userId);
 
     if (contact) {
-      await removeContact(contactId);
+      await removeContact(contactId, userId);
       res.json({
         status: 'success',
         code: 200,
@@ -111,9 +122,10 @@ router.delete('/:contactId', async (req, res, next) => {
   }
 });
 
-router.put('/:contactId', async (req, res, next) => {
+contactsRouter.put('/:contactId', auth, async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
+    const { id: userId } = req.user;
     const { body } = req;
     const { error } = schema.validate(body);
 
@@ -126,10 +138,10 @@ router.put('/:contactId', async (req, res, next) => {
       });
     }
 
-    const contact = await getContactById(contactId);
+    const contact = await getContactById(contactId, userId);
 
     if (contact) {
-      const updatedContact = await updateContact(contactId, body);
+      const updatedContact = await updateContact(contactId, body, userId);
       res.json({
         status: 'success',
         code: 200,
@@ -149,9 +161,10 @@ router.put('/:contactId', async (req, res, next) => {
   }
 });
 
-router.patch('/:contactId/favorite', async (req, res, next) => {
+contactsRouter.patch('/:contactId/favorite', auth, async (req, res, next) => {
   try {
     const contactId = req.params.contactId;
+    const { id: userId } = req.user;
     const { favorite } = req.body;
 
     if (favorite === undefined) {
@@ -162,7 +175,7 @@ router.patch('/:contactId/favorite', async (req, res, next) => {
       });
     }
 
-    const updatedContact = await updateFavorite(contactId, favorite);
+    const updatedContact = await updateFavorite(contactId, favorite, userId);
 
     if (updatedContact) {
       res.json({
@@ -184,4 +197,4 @@ router.patch('/:contactId/favorite', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+module.exports = contactsRouter;
