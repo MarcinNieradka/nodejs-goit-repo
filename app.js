@@ -2,8 +2,11 @@ const express = require('express');
 const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
+// const passport = require('passport');
 
 const contactsRouter = require('./routes/api/contacts');
+const usersRouter = require('./routes/api/users');
+// const passport = require('./config/config-passport');
 
 const app = express();
 
@@ -30,6 +33,7 @@ connectToDB();
 // ============ v2 END ================
 
 app.use('/api/contacts', contactsRouter);
+app.use('/api/users', usersRouter);
 
 app.use((req, res) => {
   res.status(404).json({ message: 'Not found' });
