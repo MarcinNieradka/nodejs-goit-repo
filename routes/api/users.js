@@ -3,10 +3,11 @@ const usersRouter = express.Router();
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const auth = require('../../config/authorization.js');
+const upload = require('../../config/multer.js');
 
 const secret = process.env.SECRET;
 
-const { getUserById, addUser, patchUser } = require('../../models/users');
+const { getUserById, addUser, patchUser, patchAvatar } = require('../../models/users');
 const User = require('../../service/schemas/schemaUsers.js');
 
 usersRouter.post('/signup', async (req, res, next) => {
@@ -110,7 +111,7 @@ usersRouter.patch('/', auth, async (req, res) => {
     const updatedUser = await patchUser(subscription, id);
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User notdd found!' });
+      return res.status(404).json({ message: 'User not found!' });
     }
 
     return res.json({
@@ -120,6 +121,27 @@ usersRouter.patch('/', auth, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json(`Error: ${error.message}`);
+  }
+});
+
+usersRouter.patch('/avatars', auth, upload.single('avatar'), async (req, res) => {
+  const avatar = req.file;
+
+  if (!avatar) {
+    return res.status(400).json('Error! Missing file!');
+  }
+  const { path } = avatar;
+  const { id } = req.user;
+
+  try {
+    const newAvatar = await patchAvatar(path, id);
+    return res.status(200).json({
+      status: 'success',
+      code: 200,
+      avatarURL: newAvatar,
+    });
+  } catch (error) {
+    res.status(500).json(`Error while updating avatar: ${error}`);
   }
 });
 
