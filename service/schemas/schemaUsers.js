@@ -26,7 +26,6 @@ const usersSchema = new mongoose.Schema({
   },
 
   avatarURL: {
-    // Dodaj pole "avatarURL".
     type: String,
   },
 });
@@ -34,14 +33,6 @@ const usersSchema = new mongoose.Schema({
 usersSchema.methods.validPassword = function (password) {
   return bcrypt.compareSync(password, this.password);
 };
-
-// usersSchema.pre('save', function (next) {
-//   if (!this.avatarURL) {
-//     const avatar = gravatar.url(this.email, { s: '250' });
-//     this.avatarURL = avatar;
-//   }
-//   next();
-// });
 
 const User = mongoose.model('user', usersSchema);
 
