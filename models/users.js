@@ -79,7 +79,7 @@ const patchUser = async (subscription, userId) => {
 
 const patchAvatar = async (filePath, userId) => {
   const localPath = `public/avatars/avatar-${userId}.jpg`;
-  const serverPath = `${process.env.SERVER_ADDRESS}/${localPath}`;
+  const serverPath = `${process.env.SERVER_ADDRESS}/${localPath.replace(/^public\//, '')}`;
 
   try {
     jimp.read(filePath).then(avatar => {
@@ -88,7 +88,7 @@ const patchAvatar = async (filePath, userId) => {
 
     await User.findByIdAndUpdate(
       userId,
-      { avatarURL: localPath },
+      { avatarURL: `${localPath.replace(/^public\//, '')}` },
       { new: true, fields: 'avatarURL' }
     );
 
