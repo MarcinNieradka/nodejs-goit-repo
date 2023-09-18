@@ -15,10 +15,6 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
-// app.post('/upload-avatar', upload.single('avatar'), (req, res) => {
-//   res.status(200).json({ message: 'Awatar został przesłany i zapisany.' });
-// });
-
 app.use('/avatars', express.static(path.join(__dirname, 'public/avatars')));
 
 // ============ v2 START ================

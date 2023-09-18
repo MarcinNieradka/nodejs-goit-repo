@@ -20,10 +20,15 @@ usersRouter.post('/signup', async (req, res, next) => {
     if (user === 409) {
       return res.status(409).json('Email in use');
     }
+    const { email, subscription, token } = user;
     return res.status(201).json({
       status: 'success',
       code: 201,
-      data: user,
+      data: {
+        email,
+        subscription,
+        token,
+      },
     });
   } catch (error) {
     next(error);
@@ -57,7 +62,7 @@ usersRouter.post('/login', async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       code: 200,
-      data: token,
+      data: { token: token },
     });
   } catch (error) {
     next(error);
