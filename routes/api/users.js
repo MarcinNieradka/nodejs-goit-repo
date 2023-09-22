@@ -4,11 +4,23 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const auth = require('../../config/authorization.js');
 const upload = require('../../config/multer.js');
+const Joi = require('joi');
 
 const secret = process.env.SECRET;
 
-const { getUserById, addUser, patchUser, patchAvatar } = require('../../models/users');
+const {
+  getUserById,
+  addUser,
+  patchUser,
+  patchAvatar,
+  verifyUser,
+  sendVerificationEmail,
+} = require('../../models/users');
 const User = require('../../service/schemas/schemaUsers.js');
+
+const schema = Joi.object({
+  email: Joi.string().email().required(),
+});
 
 usersRouter.post('/signup', async (req, res, next) => {
   const { body } = req;
@@ -17,17 +29,14 @@ usersRouter.post('/signup', async (req, res, next) => {
   }
   try {
     const user = await addUser(body);
-    if (user === 409) {
-      return res.status(409).json('Email in use');
-    }
-    const { email, subscription, token } = user;
+
+    const { email, subscription } = user;
     return res.status(201).json({
       status: 'success',
       code: 201,
       data: {
         email,
         subscription,
-        token,
       },
     });
   } catch (error) {
@@ -45,6 +54,14 @@ usersRouter.post('/login', async (req, res, next) => {
       code: 400,
       message: 'Incorrect login or password',
       data: 'Bad request',
+    });
+  }
+
+  if (user?.verify === false) {
+    return res.status(400).json({
+      status: 'error',
+      code: 400,
+      message: 'User not verified',
     });
   }
 
@@ -147,6 +164,34 @@ usersRouter.patch('/avatars', auth, upload.single('avatar'), async (req, res) =>
     });
   } catch (error) {
     res.status(500).json(`Error while updating avatar: ${error}`);
+  }
+});
+
+usersRouter.get('/verify/:verificationToken', async (req, res, next) => {
+  const verificationToken = req.params.verificationToken;
+
+  try {
+    await verifyUser(verificationToken);
+    return res.status(200).json({ status: 'success', message: 'Verification success' });
+  } catch (error) {
+    res.status(404).json(`Error: ${error}`);
+  }
+});
+
+usersRouter.post('/verify', async (req, res, next) => {
+  const { body } = req;
+  const { error } = schema.validate(body);
+
+  if (error) {
+    return res.status(400).json({ message: 'missing required field email' });
+  }
+
+  const { email } = req.body;
+  try {
+    await sendVerificationEmail(email);
+    return res.status(200).json({ message: 'Verification email sent' });
+  } catch (error) {
+    res.status(400).json({ message: `Error: ${error.message}` });
   }
 });
 
